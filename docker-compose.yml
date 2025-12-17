@@ -56,6 +56,30 @@ services:
       - goshop_network
     restart: unless-stopped
 
+  product-service:
+    build:
+      context: .
+      dockerfile: cmd/product-service/Dockerfile
+    container_name: goshop_product_service
+    ports:
+      - "8082:8082"
+      - "9092:9092"
+    environment:
+      HTTP_PORT: "8082"
+      GRPC_PORT: "9092"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: user
+      DB_PASSWORD: password
+      DB_NAME: goshop_product
+      DB_SSLMODE: disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - goshop_network
+    restart: unless-stopped
+
 networks:
   goshop_network:
     driver: bridge

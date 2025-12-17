@@ -3,17 +3,17 @@ services:
     image: postgres:15-alpine
     container_name: goshop_postgres
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: goshop_auth
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${AUTH_DB_NAME}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - goshop_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d goshop_auth"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${AUTH_DB_NAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -37,17 +37,17 @@ services:
       dockerfile: cmd/auth-service/Dockerfile
     container_name: goshop_auth_service
     ports:
-      - "8081:8081"
-      - "9091:9091"
+      - "${AUTH_HTTP_PORT}:${AUTH_HTTP_PORT}"
+      - "${AUTH_GRPC_PORT}:${AUTH_GRPC_PORT}"
     environment:
-      HTTP_PORT: "8081"
-      GRPC_PORT: "9091"
-      JWT_SECRET: "your-super-secret-key-change-in-production"
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_USER: user
-      DB_PASSWORD: password
-      DB_NAME: goshop_auth
+      HTTP_PORT: ${AUTH_HTTP_PORT}
+      GRPC_PORT: ${AUTH_GRPC_PORT}
+      JWT_SECRET: ${JWT_SECRET}
+      DB_HOST: ${POSTGRES_HOST}
+      DB_PORT: ${POSTGRES_PORT}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${AUTH_DB_NAME}
       DB_SSLMODE: disable
     depends_on:
       postgres:
@@ -62,16 +62,16 @@ services:
       dockerfile: cmd/product-service/Dockerfile
     container_name: goshop_product_service
     ports:
-      - "8082:8082"
-      - "9092:9092"
+      - "${PRODUCT_HTTP_PORT}:${PRODUCT_HTTP_PORT}"
+      - "${PRODUCT_GRPC_PORT}:${PRODUCT_GRPC_PORT}"
     environment:
-      HTTP_PORT: "8082"
-      GRPC_PORT: "9092"
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_USER: user
-      DB_PASSWORD: password
-      DB_NAME: goshop_product
+      HTTP_PORT: ${PRODUCT_HTTP_PORT}
+      GRPC_PORT: ${PRODUCT_GRPC_PORT}
+      DB_HOST: ${POSTGRES_HOST}
+      DB_PORT: ${POSTGRES_PORT}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${PRODUCT_DB_NAME}
       DB_SSLMODE: disable
     depends_on:
       postgres:
@@ -86,15 +86,15 @@ services:
       dockerfile: cmd/order-service/Dockerfile
     container_name: goshop_order_service
     ports:
-      - "8083:8083"
+      - "${ORDER_HTTP_PORT}:${ORDER_HTTP_PORT}"
     environment:
-      HTTP_PORT: "8083"
-      PRODUCT_SERVICE_ADDR: "product-service:9092"
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_USER: user
-      DB_PASSWORD: password
-      DB_NAME: goshop_order
+      HTTP_PORT: ${ORDER_HTTP_PORT}
+      PRODUCT_SERVICE_ADDR: "product-service:${PRODUCT_GRPC_PORT}"
+      DB_HOST: ${POSTGRES_HOST}
+      DB_PORT: ${POSTGRES_PORT}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${ORDER_DB_NAME}
       DB_SSLMODE: disable
     depends_on:
       postgres:

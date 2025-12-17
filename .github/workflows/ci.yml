@@ -83,6 +83,12 @@ jobs:
       - name: Build payment-service
         run: go build -o bin/payment-service ./cmd/payment-service
 
+      - name: Build cart-service
+        run: go build -o bin/cart-service ./cmd/cart-service
+
+      - name: Build notification-service
+        run: go build -o bin/notification-service ./cmd/notification-service
+
   docker:
     name: Docker Build
     runs-on: ubuntu-latest
@@ -135,3 +141,19 @@ jobs:
           file: ./cmd/payment-service/Dockerfile
           push: false
           tags: goshop/payment-service:${{ github.sha }}
+
+      - name: Build cart-service image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./cmd/cart-service/Dockerfile
+          push: false
+          tags: goshop/cart-service:${{ github.sha }}
+
+      - name: Build notification-service image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./cmd/notification-service/Dockerfile
+          push: false
+          tags: goshop/notification-service:${{ github.sha }}

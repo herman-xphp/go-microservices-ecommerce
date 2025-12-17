@@ -127,6 +127,49 @@ services:
       - goshop_network
     restart: unless-stopped
 
+  cart-service:
+    build:
+      context: .
+      dockerfile: cmd/cart-service/Dockerfile
+    container_name: goshop_cart_service
+    ports:
+      - "${CART_HTTP_PORT}:${CART_HTTP_PORT}"
+    environment:
+      HTTP_PORT: ${CART_HTTP_PORT}
+      REDIS_ADDR: ${REDIS_ADDR}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      PRODUCT_SERVICE_ADDR: "product-service:${PRODUCT_GRPC_PORT}"
+    depends_on:
+      redis:
+        condition: service_healthy
+      product-service:
+        condition: service_started
+    networks:
+      - goshop_network
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: cmd/notification-service/Dockerfile
+    container_name: goshop_notification_service
+    ports:
+      - "${NOTIFICATION_HTTP_PORT}:${NOTIFICATION_HTTP_PORT}"
+    environment:
+      HTTP_PORT: ${NOTIFICATION_HTTP_PORT}
+      DB_HOST: ${POSTGRES_HOST}
+      DB_PORT: ${POSTGRES_PORT}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${NOTIFICATION_DB_NAME}
+      DB_SSLMODE: disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - goshop_network
+    restart: unless-stopped
+
   api-gateway:
     build:
       context: .
@@ -142,6 +185,8 @@ services:
       PRODUCT_SERVICE_URL: "http://product-service:${PRODUCT_HTTP_PORT}"
       ORDER_SERVICE_URL: "http://order-service:${ORDER_HTTP_PORT}"
       PAYMENT_SERVICE_URL: "http://payment-service:${PAYMENT_HTTP_PORT}"
+      CART_SERVICE_URL: "http://cart-service:${CART_HTTP_PORT}"
+      NOTIFICATION_SERVICE_URL: "http://notification-service:${NOTIFICATION_HTTP_PORT}"
     depends_on:
       auth-service:
         condition: service_started
@@ -150,6 +195,10 @@ services:
       order-service:
         condition: service_started
       payment-service:
+        condition: service_started
+      cart-service:
+        condition: service_started
+      notification-service:
         condition: service_started
     networks:
       - goshop_network

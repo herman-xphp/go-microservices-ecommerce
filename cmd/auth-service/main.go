@@ -2,11 +2,16 @@ package main
 
 import (
 	"log"
+	"net"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc"
+
 	"github.com/username/go-microservices-ecommerce/pkg/database"
+	pb "github.com/username/go-microservices-ecommerce/proto/auth"
 	"github.com/username/go-microservices-ecommerce/services/auth/domain"
+	authgrpc "github.com/username/go-microservices-ecommerce/services/auth/grpc"
 	"github.com/username/go-microservices-ecommerce/services/auth/handler"
 	"github.com/username/go-microservices-ecommerce/services/auth/repository"
 	"github.com/username/go-microservices-ecommerce/services/auth/service"
@@ -14,7 +19,8 @@ import (
 
 func main() {
 	// Load configuration from environment variables
-	port := getEnv("PORT", "8081")
+	httpPort := getEnv("HTTP_PORT", "8081")
+	grpcPort := getEnv("GRPC_PORT", "9091")
 	jwtSecret := getEnv("JWT_SECRET", "your-super-secret-key-change-in-production")
 
 	dbConfig := database.Config{
@@ -43,12 +49,20 @@ func main() {
 	authService := service.NewAuthService(userRepo, jwtSecret)
 	authHandler := handler.NewAuthHandler(authService)
 
+	// Start gRPC server in a goroutine
+	go startGRPCServer(grpcPort, authService)
+
 	// Setup Gin router
 	router := gin.Default()
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok", "service": "auth-service"})
+		c.JSON(200, gin.H{
+			"status":    "ok",
+			"service":   "auth-service",
+			"http_port": httpPort,
+			"grpc_port": grpcPort,
+		})
 	})
 
 	// Register API routes
@@ -56,10 +70,26 @@ func main() {
 	authHandler.RegisterRoutes(api)
 	authHandler.RegisterProtectedRoutes(api)
 
-	// Start server
-	log.Printf("🚀 Auth Service starting on port %s", port)
-	if err := router.Run(":" + port); err != nil {
-		log.Fatalf("❌ Failed to start server: %v", err)
+	// Start HTTP server
+	log.Printf("🚀 Auth Service HTTP starting on port %s", httpPort)
+	if err := router.Run(":" + httpPort); err != nil {
+		log.Fatalf("❌ Failed to start HTTP server: %v", err)
+	}
+}
+
+func startGRPCServer(port string, authService service.AuthService) {
+	lis, err := net.Listen("tcp", ":"+port)
+	if err != nil {
+		log.Fatalf("❌ Failed to listen on gRPC port %s: %v", port, err)
+	}
+
+	grpcServer := grpc.NewServer()
+	authGRPCServer := authgrpc.NewAuthGRPCServer(authService)
+	pb.RegisterAuthServiceServer(grpcServer, authGRPCServer)
+
+	log.Printf("🚀 Auth Service gRPC starting on port %s", port)
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("❌ Failed to start gRPC server: %v", err)
 	}
 }
 

@@ -23,6 +23,7 @@ type AuthService interface {
 	Register(req *dto.RegisterRequest) (*dto.AuthResponse, error)
 	Login(req *dto.LoginRequest) (*dto.AuthResponse, error)
 	ValidateToken(tokenString string) (*domain.User, error)
+	GetUserByID(id uint) (*domain.User, error)
 }
 
 type authServiceImpl struct {
@@ -152,4 +153,8 @@ func (s *authServiceImpl) generateToken(user *domain.User) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(s.jwtSecret))
+}
+
+func (s *authServiceImpl) GetUserByID(id uint) (*domain.User, error) {
+	return s.userRepo.FindByID(id)
 }

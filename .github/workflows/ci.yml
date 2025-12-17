@@ -77,6 +77,9 @@ jobs:
       - name: Build order-service
         run: go build -o bin/order-service ./cmd/order-service
 
+      - name: Build gateway
+        run: go build -o bin/gateway ./cmd/gateway
+
   docker:
     name: Docker Build
     runs-on: ubuntu-latest
@@ -113,3 +116,11 @@ jobs:
           file: ./cmd/order-service/Dockerfile
           push: false
           tags: goshop/order-service:${{ github.sha }}
+
+      - name: Build gateway image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./cmd/gateway/Dockerfile
+          push: false
+          tags: goshop/api-gateway:${{ github.sha }}

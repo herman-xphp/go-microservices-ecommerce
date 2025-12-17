@@ -105,6 +105,31 @@ services:
       - goshop_network
     restart: unless-stopped
 
+  api-gateway:
+    build:
+      context: .
+      dockerfile: cmd/gateway/Dockerfile
+    container_name: goshop_api_gateway
+    ports:
+      - "${GATEWAY_HTTP_PORT}:${GATEWAY_HTTP_PORT}"
+    environment:
+      HTTP_PORT: ${GATEWAY_HTTP_PORT}
+      AUTH_SERVICE_ADDR: "auth-service:${AUTH_GRPC_PORT}"
+      PRODUCT_SERVICE_ADDR: "product-service:${PRODUCT_GRPC_PORT}"
+      AUTH_SERVICE_URL: "http://auth-service:${AUTH_HTTP_PORT}"
+      PRODUCT_SERVICE_URL: "http://product-service:${PRODUCT_HTTP_PORT}"
+      ORDER_SERVICE_URL: "http://order-service:${ORDER_HTTP_PORT}"
+    depends_on:
+      auth-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+    networks:
+      - goshop_network
+    restart: unless-stopped
+
 networks:
   goshop_network:
     driver: bridge

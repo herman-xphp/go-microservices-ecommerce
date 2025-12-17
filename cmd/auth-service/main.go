@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net"
 	"os"
 
@@ -9,6 +8,8 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/herman-xphp/go-microservices-ecommerce/pkg/database"
+	"github.com/herman-xphp/go-microservices-ecommerce/pkg/logger"
+	"github.com/herman-xphp/go-microservices-ecommerce/pkg/middleware"
 	pb "github.com/herman-xphp/go-microservices-ecommerce/proto/auth"
 	"github.com/herman-xphp/go-microservices-ecommerce/services/auth/domain"
 	authgrpc "github.com/herman-xphp/go-microservices-ecommerce/services/auth/grpc"
@@ -17,7 +18,11 @@ import (
 	"github.com/herman-xphp/go-microservices-ecommerce/services/auth/service"
 )
 
+const serviceName = "auth-service"
+
 func main() {
+	log := logger.WithService(serviceName)
+
 	// Load configuration from environment variables
 	httpPort := getEnv("HTTP_PORT", "8081")
 	grpcPort := getEnv("GRPC_PORT", "9091")
@@ -35,14 +40,14 @@ func main() {
 	// Initialize database connection
 	db, err := database.NewPostgresConnection(dbConfig)
 	if err != nil {
-		log.Fatalf("❌ Failed to connect to database: %v", err)
+		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
 
 	// Auto-migrate database schema
 	if err := db.AutoMigrate(&domain.User{}); err != nil {
-		log.Fatalf("❌ Failed to migrate database: %v", err)
+		log.Fatal().Err(err).Msg("Failed to migrate database")
 	}
-	log.Println("✅ Database migrated successfully")
+	log.Info().Msg("Database migrated successfully")
 
 	// Initialize layers (Dependency Injection)
 	userRepo := repository.NewUserRepository(db)
@@ -52,8 +57,17 @@ func main() {
 	// Start gRPC server in a goroutine
 	go startGRPCServer(grpcPort, authService)
 
-	// Setup Gin router
-	router := gin.Default()
+	// Setup Gin router with middleware
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.New()
+
+	// Apply middleware
+	router.Use(middleware.Recovery())
+	router.Use(middleware.RequestID())
+	router.Use(middleware.Logger(serviceName))
+	router.Use(middleware.CORS())
+	router.Use(middleware.SecureHeaders())
+	router.Use(middleware.RateLimiter(100, 10)) // 100 req/s, burst 10
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
@@ -71,25 +85,27 @@ func main() {
 	authHandler.RegisterProtectedRoutes(api)
 
 	// Start HTTP server
-	log.Printf("🚀 Auth Service HTTP starting on port %s", httpPort)
+	log.Info().Str("port", httpPort).Msg("Auth Service HTTP starting")
 	if err := router.Run(":" + httpPort); err != nil {
-		log.Fatalf("❌ Failed to start HTTP server: %v", err)
+		log.Fatal().Err(err).Msg("Failed to start HTTP server")
 	}
 }
 
 func startGRPCServer(port string, authService service.AuthService) {
+	log := logger.WithService(serviceName)
+
 	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		log.Fatalf("❌ Failed to listen on gRPC port %s: %v", port, err)
+		log.Fatal().Err(err).Str("port", port).Msg("Failed to listen on gRPC port")
 	}
 
 	grpcServer := grpc.NewServer()
 	authGRPCServer := authgrpc.NewAuthGRPCServer(authService)
 	pb.RegisterAuthServiceServer(grpcServer, authGRPCServer)
 
-	log.Printf("🚀 Auth Service gRPC starting on port %s", port)
+	log.Info().Str("port", port).Msg("Auth Service gRPC starting")
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("❌ Failed to start gRPC server: %v", err)
+		log.Fatal().Err(err).Msg("Failed to start gRPC server")
 	}
 }
 

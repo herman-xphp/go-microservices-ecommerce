@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net"
 	"os"
 
@@ -9,6 +8,8 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/herman-xphp/go-microservices-ecommerce/pkg/database"
+	"github.com/herman-xphp/go-microservices-ecommerce/pkg/logger"
+	"github.com/herman-xphp/go-microservices-ecommerce/pkg/middleware"
 	pb "github.com/herman-xphp/go-microservices-ecommerce/proto/product"
 	"github.com/herman-xphp/go-microservices-ecommerce/services/product/domain"
 	productgrpc "github.com/herman-xphp/go-microservices-ecommerce/services/product/grpc"
@@ -17,7 +18,11 @@ import (
 	"github.com/herman-xphp/go-microservices-ecommerce/services/product/service"
 )
 
+const serviceName = "product-service"
+
 func main() {
+	log := logger.WithService(serviceName)
+
 	// Load configuration from environment variables
 	httpPort := getEnv("HTTP_PORT", "8082")
 	grpcPort := getEnv("GRPC_PORT", "9092")
@@ -34,14 +39,14 @@ func main() {
 	// Initialize database connection
 	db, err := database.NewPostgresConnection(dbConfig)
 	if err != nil {
-		log.Fatalf("❌ Failed to connect to database: %v", err)
+		log.Fatal().Err(err).Msg("Failed to connect to database")
 	}
 
 	// Auto-migrate database schema
 	if err := db.AutoMigrate(&domain.Category{}, &domain.Product{}); err != nil {
-		log.Fatalf("❌ Failed to migrate database: %v", err)
+		log.Fatal().Err(err).Msg("Failed to migrate database")
 	}
-	log.Println("✅ Database migrated successfully")
+	log.Info().Msg("Database migrated successfully")
 
 	// Initialize layers (Dependency Injection)
 	productRepo := repository.NewProductRepository(db)
@@ -52,14 +57,23 @@ func main() {
 	// Start gRPC server in a goroutine
 	go startGRPCServer(grpcPort, productService)
 
-	// Setup Gin router
-	router := gin.Default()
+	// Setup Gin router with middleware
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.New()
+
+	// Apply middleware
+	router.Use(middleware.Recovery())
+	router.Use(middleware.RequestID())
+	router.Use(middleware.Logger(serviceName))
+	router.Use(middleware.CORS())
+	router.Use(middleware.SecureHeaders())
+	router.Use(middleware.RateLimiter(100, 10))
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status":    "ok",
-			"service":   "product-service",
+			"service":   serviceName,
 			"http_port": httpPort,
 			"grpc_port": grpcPort,
 		})
@@ -70,25 +84,27 @@ func main() {
 	productHandler.RegisterRoutes(api)
 
 	// Start HTTP server
-	log.Printf("🚀 Product Service HTTP starting on port %s", httpPort)
+	log.Info().Str("port", httpPort).Msg("Product Service HTTP starting")
 	if err := router.Run(":" + httpPort); err != nil {
-		log.Fatalf("❌ Failed to start HTTP server: %v", err)
+		log.Fatal().Err(err).Msg("Failed to start HTTP server")
 	}
 }
 
 func startGRPCServer(port string, productService service.ProductService) {
+	log := logger.WithService(serviceName)
+
 	lis, err := net.Listen("tcp", ":"+port)
 	if err != nil {
-		log.Fatalf("❌ Failed to listen on gRPC port %s: %v", port, err)
+		log.Fatal().Err(err).Str("port", port).Msg("Failed to listen on gRPC port")
 	}
 
 	grpcServer := grpc.NewServer()
 	productGRPCServer := productgrpc.NewProductGRPCServer(productService)
 	pb.RegisterProductServiceServer(grpcServer, productGRPCServer)
 
-	log.Printf("🚀 Product Service gRPC starting on port %s", port)
+	log.Info().Str("port", port).Msg("Product Service gRPC starting")
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("❌ Failed to start gRPC server: %v", err)
+		log.Fatal().Err(err).Msg("Failed to start gRPC server")
 	}
 }
 

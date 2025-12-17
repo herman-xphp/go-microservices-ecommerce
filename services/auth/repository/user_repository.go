@@ -1,6 +1,6 @@
 package repository
 
-import "github.com/username/go-microservices-ecommerce/services/auth/domain"
+import "github.com/herman-xphp/go-microservices-ecommerce/services/auth/domain"
 
 // UserRepository defines the interface for user data operations
 type UserRepository interface {

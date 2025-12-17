@@ -8,13 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 
-	"github.com/username/go-microservices-ecommerce/pkg/database"
-	pb "github.com/username/go-microservices-ecommerce/proto/auth"
-	"github.com/username/go-microservices-ecommerce/services/auth/domain"
-	authgrpc "github.com/username/go-microservices-ecommerce/services/auth/grpc"
-	"github.com/username/go-microservices-ecommerce/services/auth/handler"
-	"github.com/username/go-microservices-ecommerce/services/auth/repository"
-	"github.com/username/go-microservices-ecommerce/services/auth/service"
+	"github.com/herman-xphp/go-microservices-ecommerce/pkg/database"
+	pb "github.com/herman-xphp/go-microservices-ecommerce/proto/auth"
+	"github.com/herman-xphp/go-microservices-ecommerce/services/auth/domain"
+	authgrpc "github.com/herman-xphp/go-microservices-ecommerce/services/auth/grpc"
+	"github.com/herman-xphp/go-microservices-ecommerce/services/auth/handler"
+	"github.com/herman-xphp/go-microservices-ecommerce/services/auth/repository"
+	"github.com/herman-xphp/go-microservices-ecommerce/services/auth/service"
 )
 
 func main() {

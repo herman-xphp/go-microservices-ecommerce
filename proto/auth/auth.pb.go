@@ -284,7 +284,7 @@ const file_proto_auth_auth_proto_rawDesc = "" +
 	"\x04role\x18\x05 \x01(\tR\x04role2\x9b\x01\n" +
 	"\vAuthService\x12H\n" +
 	"\rValidateToken\x12\x1a.auth.ValidateTokenRequest\x1a\x1b.auth.ValidateTokenResponse\x12B\n" +
-	"\vGetUserById\x12\x18.auth.GetUserByIdRequest\x1a\x19.auth.GetUserByIdResponseB;Z9github.com/username/go-microservices-ecommerce/proto/authb\x06proto3"
+	"\vGetUserById\x12\x18.auth.GetUserByIdRequest\x1a\x19.auth.GetUserByIdResponseB;Z9github.com/herman-xphp/go-microservices-ecommerce/proto/authb\x06proto3"
 
 var (
 	file_proto_auth_auth_proto_rawDescOnce sync.Once

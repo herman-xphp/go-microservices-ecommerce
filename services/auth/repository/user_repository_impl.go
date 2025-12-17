@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"github.com/username/go-microservices-ecommerce/services/auth/domain"
+	"github.com/herman-xphp/go-microservices-ecommerce/services/auth/domain"
 	"gorm.io/gorm"
 )
 

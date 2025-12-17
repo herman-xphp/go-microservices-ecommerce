@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/username/go-microservices-ecommerce/services/auth/domain"
-	"github.com/username/go-microservices-ecommerce/services/auth/dto"
-	"github.com/username/go-microservices-ecommerce/services/auth/repository"
+	"github.com/herman-xphp/go-microservices-ecommerce/services/auth/domain"
+	"github.com/herman-xphp/go-microservices-ecommerce/services/auth/dto"
+	"github.com/herman-xphp/go-microservices-ecommerce/services/auth/repository"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )

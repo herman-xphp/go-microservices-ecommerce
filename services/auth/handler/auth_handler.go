@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/username/go-microservices-ecommerce/pkg/utils"
-	"github.com/username/go-microservices-ecommerce/services/auth/dto"
-	"github.com/username/go-microservices-ecommerce/services/auth/service"
+	"github.com/herman-xphp/go-microservices-ecommerce/pkg/utils"
+	"github.com/herman-xphp/go-microservices-ecommerce/services/auth/dto"
+	"github.com/herman-xphp/go-microservices-ecommerce/services/auth/service"
 )
 
 type AuthHandler struct {

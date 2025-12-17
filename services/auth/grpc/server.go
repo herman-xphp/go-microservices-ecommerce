@@ -3,8 +3,8 @@ package grpc
 import (
 	"context"
 
-	pb "github.com/username/go-microservices-ecommerce/proto/auth"
-	"github.com/username/go-microservices-ecommerce/services/auth/service"
+	pb "github.com/herman-xphp/go-microservices-ecommerce/proto/auth"
+	"github.com/herman-xphp/go-microservices-ecommerce/services/auth/service"
 )
 
 // AuthGRPCServer implements the gRPC AuthService interface

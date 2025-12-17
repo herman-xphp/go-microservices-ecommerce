@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/username/go-microservices-ecommerce/pkg/utils"
-	"github.com/username/go-microservices-ecommerce/services/auth/service"
+	"github.com/herman-xphp/go-microservices-ecommerce/pkg/utils"
+	"github.com/herman-xphp/go-microservices-ecommerce/services/auth/service"
 )
 
 // AuthMiddleware creates a JWT authentication middleware

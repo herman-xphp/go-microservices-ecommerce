@@ -71,3 +71,26 @@ func (h *AuthHandler) RegisterRoutes(router *gin.RouterGroup) {
 		auth.POST("/login", h.Login)
 	}
 }
+
+// RegisterProtectedRoutes registers protected routes that require authentication
+func (h *AuthHandler) RegisterProtectedRoutes(router *gin.RouterGroup) {
+	auth := router.Group("/auth")
+	auth.Use(AuthMiddleware(h.authService))
+	{
+		auth.GET("/profile", h.Profile)
+	}
+}
+
+// Profile returns the current user's profile
+// GET /api/v1/auth/profile
+func (h *AuthHandler) Profile(c *gin.Context) {
+	userID, _ := c.Get("user_id")
+	email, _ := c.Get("user_email")
+	role, _ := c.Get("user_role")
+
+	utils.ResponseSuccess(c, http.StatusOK, "Profile retrieved successfully", dto.UserResponse{
+		ID:    userID.(uint),
+		Email: email.(string),
+		Role:  role.(string),
+	})
+}

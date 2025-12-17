@@ -54,6 +54,7 @@ func main() {
 	// Register API routes
 	api := router.Group("/api/v1")
 	authHandler.RegisterRoutes(api)
+	authHandler.RegisterProtectedRoutes(api)
 
 	// Start server
 	log.Printf("🚀 Auth Service starting on port %s", port)

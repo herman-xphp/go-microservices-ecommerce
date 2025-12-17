@@ -94,6 +94,11 @@ func (s *authServiceImpl) Login(req *dto.LoginRequest) (*dto.AuthResponse, error
 		return nil, err
 	}
 
+	// Check if user exists
+	if user == nil {
+		return nil, ErrInvalidCredentials
+	}
+
 	// Verify password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		return nil, ErrInvalidCredentials
@@ -156,5 +161,12 @@ func (s *authServiceImpl) generateToken(user *domain.User) (string, error) {
 }
 
 func (s *authServiceImpl) GetUserByID(id uint) (*domain.User, error) {
-	return s.userRepo.FindByID(id)
+	user, err := s.userRepo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, ErrUserNotFound
+	}
+	return user, nil
 }

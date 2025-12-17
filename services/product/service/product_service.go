@@ -74,6 +74,9 @@ func (s *productServiceImpl) GetProduct(id uint) (*dto.ProductResponse, error) {
 		}
 		return nil, err
 	}
+	if product == nil {
+		return nil, ErrProductNotFound
+	}
 	return s.toProductResponse(product), nil
 }
 

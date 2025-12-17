@@ -105,6 +105,28 @@ services:
       - goshop_network
     restart: unless-stopped
 
+  payment-service:
+    build:
+      context: .
+      dockerfile: cmd/payment-service/Dockerfile
+    container_name: goshop_payment_service
+    ports:
+      - "${PAYMENT_HTTP_PORT}:${PAYMENT_HTTP_PORT}"
+    environment:
+      HTTP_PORT: ${PAYMENT_HTTP_PORT}
+      DB_HOST: ${POSTGRES_HOST}
+      DB_PORT: ${POSTGRES_PORT}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${PAYMENT_DB_NAME}
+      DB_SSLMODE: disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - goshop_network
+    restart: unless-stopped
+
   api-gateway:
     build:
       context: .
@@ -119,12 +141,15 @@ services:
       AUTH_SERVICE_URL: "http://auth-service:${AUTH_HTTP_PORT}"
       PRODUCT_SERVICE_URL: "http://product-service:${PRODUCT_HTTP_PORT}"
       ORDER_SERVICE_URL: "http://order-service:${ORDER_HTTP_PORT}"
+      PAYMENT_SERVICE_URL: "http://payment-service:${PAYMENT_HTTP_PORT}"
     depends_on:
       auth-service:
         condition: service_started
       product-service:
         condition: service_started
       order-service:
+        condition: service_started
+      payment-service:
         condition: service_started
     networks:
       - goshop_network

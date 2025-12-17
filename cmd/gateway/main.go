@@ -24,6 +24,7 @@ func main() {
 	authServiceURL := getEnv("AUTH_SERVICE_URL", "http://localhost:8081")
 	productServiceURL := getEnv("PRODUCT_SERVICE_URL", "http://localhost:8082")
 	orderServiceURL := getEnv("ORDER_SERVICE_URL", "http://localhost:8083")
+	paymentServiceURL := getEnv("PAYMENT_SERVICE_URL", "http://localhost:8084")
 
 	// Initialize gRPC clients
 	authClient, err := client.NewAuthClient(authServiceAddr)
@@ -57,6 +58,10 @@ func main() {
 			Name:    "order-service",
 			BaseURL: orderServiceURL,
 		},
+		"payment": {
+			Name:    "payment-service",
+			BaseURL: paymentServiceURL,
+		},
 	}
 	proxyHandler := handler.NewProxyHandler(services)
 
@@ -84,6 +89,7 @@ func main() {
 				"auth_http":    authServiceURL,
 				"product_http": productServiceURL,
 				"order_http":   orderServiceURL,
+				"payment_http": paymentServiceURL,
 			},
 		})
 	})
@@ -138,12 +144,23 @@ func main() {
 			protected.GET("/orders/:id", proxyHandler.Proxy("order"))
 			protected.PUT("/orders/:id/status", proxyHandler.Proxy("order"))
 			protected.POST("/orders/:id/cancel", proxyHandler.Proxy("order"))
+
+			// Payment routes
+			protected.POST("/payments", proxyHandler.Proxy("payment"))
+			protected.GET("/payments", proxyHandler.Proxy("payment"))
+			protected.GET("/payments/:id", proxyHandler.Proxy("payment"))
+			protected.GET("/payments/order/:order_id", proxyHandler.Proxy("payment"))
+			protected.POST("/payments/:id/cancel", proxyHandler.Proxy("payment"))
+			protected.POST("/payments/:id/refund", proxyHandler.Proxy("payment"))
 		}
+
+		// Payment webhook (public - called by payment provider)
+		api.POST("/payments/webhook", proxyHandler.Proxy("payment"))
 	}
 
 	// Start HTTP server
 	log.Info().Str("port", httpPort).Msg("API Gateway starting")
-	log.Info().Msg(fmt.Sprintf("Backends: auth=%s, product=%s, order=%s", authServiceURL, productServiceURL, orderServiceURL))
+	log.Info().Msg(fmt.Sprintf("Backends: auth=%s, product=%s, order=%s, payment=%s", authServiceURL, productServiceURL, orderServiceURL, paymentServiceURL))
 
 	if err := router.Run(":" + httpPort); err != nil {
 		log.Fatal().Err(err).Msg("Failed to start API Gateway")

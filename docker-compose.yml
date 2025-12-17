@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: goshop_postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: goshop_auth # Default DB, we will create others via script or connection
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - goshop_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d goshop_auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: goshop_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - goshop_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+networks:
+  goshop_network:
+    driver: bridge
+
+volumes:
+  postgres_data:

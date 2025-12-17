@@ -25,6 +25,8 @@ func main() {
 	productServiceURL := getEnv("PRODUCT_SERVICE_URL", "http://localhost:8082")
 	orderServiceURL := getEnv("ORDER_SERVICE_URL", "http://localhost:8083")
 	paymentServiceURL := getEnv("PAYMENT_SERVICE_URL", "http://localhost:8084")
+	cartServiceURL := getEnv("CART_SERVICE_URL", "http://localhost:8085")
+	notificationServiceURL := getEnv("NOTIFICATION_SERVICE_URL", "http://localhost:8086")
 
 	// Initialize gRPC clients
 	authClient, err := client.NewAuthClient(authServiceAddr)
@@ -61,6 +63,14 @@ func main() {
 		"payment": {
 			Name:    "payment-service",
 			BaseURL: paymentServiceURL,
+		},
+		"cart": {
+			Name:    "cart-service",
+			BaseURL: cartServiceURL,
+		},
+		"notification": {
+			Name:    "notification-service",
+			BaseURL: notificationServiceURL,
 		},
 	}
 	proxyHandler := handler.NewProxyHandler(services)
@@ -152,6 +162,19 @@ func main() {
 			protected.GET("/payments/order/:order_id", proxyHandler.Proxy("payment"))
 			protected.POST("/payments/:id/cancel", proxyHandler.Proxy("payment"))
 			protected.POST("/payments/:id/refund", proxyHandler.Proxy("payment"))
+
+			// Cart routes
+			protected.GET("/cart", proxyHandler.Proxy("cart"))
+			protected.POST("/cart/items", proxyHandler.Proxy("cart"))
+			protected.PUT("/cart/items/:product_id", proxyHandler.Proxy("cart"))
+			protected.DELETE("/cart/items/:product_id", proxyHandler.Proxy("cart"))
+			protected.DELETE("/cart", proxyHandler.Proxy("cart"))
+
+			// Notification routes
+			protected.GET("/notifications", proxyHandler.Proxy("notification"))
+			protected.POST("/notifications/email", proxyHandler.Proxy("notification"))
+			protected.POST("/notifications/sms", proxyHandler.Proxy("notification"))
+			protected.POST("/notifications/push", proxyHandler.Proxy("notification"))
 		}
 
 		// Payment webhook (public - called by payment provider)
